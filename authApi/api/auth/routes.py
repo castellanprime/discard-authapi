@@ -107,7 +107,7 @@ class UserRoute(MethodView):
 				}
 				return make_response(jsonify(response)), 401
 		else:
-			auth_token = ' '
+			auth_token = ''
 		if auth_token:	# an empty string will not enter this loop
 			resp = UserModel.decode_refresh_token(auth_token)
 			try:
@@ -133,7 +133,7 @@ class UserRoute(MethodView):
 		else:
 			responseObject = {
 				'status': 'Fail',
-				'message': 'Provide a valide auth token'
+				'message': 'Provide a valid auth token'
 			}
 			return make_response(jsonify(responseObject)), 401
 
@@ -210,7 +210,7 @@ auth_blueprint.add_url_rule(
 )
 
 auth_blueprint.add_url_rule(
-	'/api/auth/users/',
+	'/api/auth/users',
 	view_func=users_route,
 	methods=['GET']
 )

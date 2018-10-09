@@ -21,8 +21,8 @@ class UserModel(db.Model):
 		self.username = username
 		self.password_hash = flask_bcrypt.generate_password_hash(password).decode('utf-8')
 		self.registered_on = datetime.datetime.utcnow()
-		self.admin = False
-		self.anonymous = False
+		self.admin = admin
+		self.anonymous = anonymous
 
 	def check_password(self, password):
 		return flask_bcrypt.check_password_hash(self.password_hash, password)
