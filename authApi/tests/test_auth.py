@@ -36,7 +36,8 @@ def get_user_status(self, token):
 			Authorization='Bearer ' + json.loads(
 				token.data.decode()
 			)['refresh_token']
-		)
+		),
+		content_type='application/json'
 	)
 
 def get_user_status_malformed_token(self, token):
@@ -46,7 +47,28 @@ def get_user_status_malformed_token(self, token):
 			Authorization='Bearer' + json.loads(
 				token.data.decode()
 			)['refresh_token']
-		)
+		),
+		content_type='application/json'
+	)
+
+def get_user_status_no_token(self):
+	return self.client.get(
+		'/api/auth/me',
+		headers=dict(
+			Authorization=''
+		),
+		content_type='application/json'
+	)
+
+def get_all_users(self):
+	return self.client.get(
+		'/api/auth/users',
+		headers=dict(
+			Authorization='Bearer ' + json.loads(
+				token.data.decode()
+			)['refresh_token']
+		),
+		content_type='application/json'
 	)
 
 class TestAuthBlueprint(BaseTestCase):
@@ -145,7 +167,7 @@ class TestAuthBlueprint(BaseTestCase):
 	def test_anonymous_user_status(self):
 		"""Test anonymous user status"""
 		with self.client:
-			response = register_user(self, 'fmaketouser', '123456', admin=True)
+			response = register_user(self, 'fmaketouser', '123456', anonymous=True)
 			resp = get_user_status(response)
 			data = json.loads(resp.data.decode())
 			print(data)
@@ -162,9 +184,51 @@ class TestAuthBlueprint(BaseTestCase):
 			response = register_user(self, 'fmaketouser', '123456', admin=True)
 			resp = get_user_status_malformed_token(response)
 			data = json.loads(resp.data.decode())
-			self.assertTrue(data['status'] == 'Fail')
-            self.assertTrue(data['message'] == 'Bearer token malformed.')
+			self.assertTrue(data.get('status') == 'Fail')
+            self.assertTrue(data.get('message') == 'Bearer token malformed.')
 			self.assertEqual(response.status_code, 401)
+
+	def test_user_status_no_token(self):
+		""" Test for user status with no token"""
+		with self.client:
+			response = register_user(self, 'fmaketouser', '123456')
+			resp = get_user_status_no_token(response)
+			data = json.loads(resp.data.decode())
+			self.assertTrue(data['status'] == 'Fail')
+			self.assertTrue(data['message'] == 'Provide a valid auth token')
+			self.assertEqual(resp.status_code, 401)
+
+	def test_get_users_status(self):
+		""" Test for getting all users in the system"""
+		with self.client:
+			response1 = register_user(self, 'fmaketouser', '123456')
+			response2 = register_user(self, 'fmaketouser1', '789012', admin=True)
+			response3 = register_user(self, 'fmaketouser2', 'we234q')
+			resp = get_all_users(response2)
+			self.assertTrue(resp.get('status') == 'Success')
+			self.assertTrue(resp.get('data') is not None)
+			self.assertTrue(isinstance(resp.get('data'), list))
+			self.assertTrue(len(resp.get('data')) == 3)
+			self.assertTrue(resp.status_code, 200)
+
+			resp1 = get_all_users(response1)
+			self.assertTrue(resp1.get('status') == 'Fail')
+			self.assertTrue(resp1,get('message') == 'Unauthorized since you are not an admin')
+			self.assertTrue(resp1.status_code, 401) 
+
+			resp2 = self.client.get(
+				'/api/auth/users',
+				headers=dict(
+					Authorization=''
+				)
+			)
+			self.asserttrue(resp2.get('status') == 'Fail')
+			self.assertTrue(resp2.get('message') == 'Provide a valid auth token')
+			self.assertTrue(resp2.status_code, 401)
+
+
+
+
 
 if __name__ == '__main__':
 	unittest.main()
