@@ -10,17 +10,19 @@ class UserModel(db.Model):
 	id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 	registered_on = db.Column(db.DateTime, nullable=False)
 	admin = db.Column(db.Boolean, nullable=False, default=False)
+	anonymous = db.Column(db.Boolean, nullable=False, default=False)
 	password_hash = db.Column(db.String(100), nullable=False)
 	username = db.Column(db.String(15), unique=True)
 	token_id = db.Column(db.String(60), unique=True)
 	updated_on = db.Column(db.DateTime)
 	updated_by = db.Column(db.String(15))
 	
-	def __init__(self, password, username, admin=False):
+	def __init__(self, password, username, admin=False, anonymous=False):
 		self.username = username
 		self.password_hash = flask_bcrypt.generate_password_hash(password).decode('utf-8')
 		self.registered_on = datetime.datetime.utcnow()
 		self.admin = False
+		self.anonymous = False
 
 	def check_password(self, password):
 		return flask_bcrypt.check_password_hash(self.password_hash, password)
@@ -44,6 +46,7 @@ class UserModel(db.Model):
 				'sub': username,
 				'jti': refresh_token_id,
 				'admin':self.admin,
+				'anonymous': self.anonymous
 			}
 			auth_token = jwt.encode(auth_token_payload, key, algorithm='HS256')
 			refresh_token = jwt.encode(refresh_token_payload, key, algorithm='HS256')
@@ -66,7 +69,8 @@ class UserModel(db.Model):
 			else:
 				return json.dumps(dict(
 					name=payload['sub'],
-					admin=payload['admin']
+					admin=payload['admin'],
+					anonymous=payload['anonymous']
 				))
 		except jwt.ExpiredSignatureError:
 			return 'Signature expired. Please log in again'

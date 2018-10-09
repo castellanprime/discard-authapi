@@ -17,10 +17,23 @@ class RegisterRoute(MethodView):
 		user = UserModel.query.filter_by(username=post_data.get('username')).first()
 		if user is None:
 			try:
-				user = UserModel(
-					username=post_data.get('username'),
-					password=post_data.get('password')
-				)
+				if post_data.get('admin'):
+					user = UserModel(
+						username=post_data.get('username'),
+						password=post_data.get('password'),
+						admin=post_data.get('admin')
+					)
+				elif post_data.get('anonymous'):
+					user = UserModel(
+						username=post_data.get('username'),
+						password=post_data.get('password'),
+						anonymous=post_data.get('anonymous')
+					)
+				else:
+					user = UserModel(
+						username=post_data.get('username'),
+						password=post_data.get('password')
+					)
 				print('db:', db.session)
 				access_token, refresh_token, refresh_token_id = user.encode_auth_tokens(user.username)
 				print('Tokens: ', access_token, ': ', refresh_token)
@@ -105,7 +118,8 @@ class UserRoute(MethodView):
 					'data': {
 						'username': user.username,
 						'registered_on': user.registered_on,
-						'admin': user.admin
+						'admin': user.admin,
+						'anonymous': user.anonymous
 					}
 				}
 				return make_response(jsonify(res_object)), 200

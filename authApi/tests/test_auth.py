@@ -7,12 +7,14 @@ from authApi.api.models.user import UserModel
 from authApi.api.models.blacklist import BlackListTokenModel
 from authApi.tests.base import BaseTestCase
 
-def register_user(self, username, password):
+def register_user(self, username, password, admin=False, anonymous=False):
 	return self.client.post(
 		'/api/auth/register',
 		data=json.dumps(dict(
 			username=username,
-			password=password
+			password=password,
+			admin=admin,
+			anonymous=anonmyous
 		)),
 		content_type='application/json'
 	)
@@ -25,6 +27,16 @@ def login_user(self, username, password):
 			password=password
 		)),
 		content_type='application/json'
+	)
+
+def get_user_status(self, token):
+	return self.client.get(
+		'/api/auth/me',
+		headers=dict(
+			Authorization='Bearer ' + json.loads(
+				token.data.decode()
+			)['refresh_token']
+		)
 	)
 
 class TestAuthBlueprint(BaseTestCase):
@@ -92,6 +104,33 @@ class TestAuthBlueprint(BaseTestCase):
 			self.assertTrue(response.content_type == 'application/json')
 			self.assertEqual(response.status_code, 404)
 
+	def test_normal_user_status(self):
+		"""Test user status"""
+		with self.client:
+			response = register_user(self, 'fmaketouser', '123456');
+			resp = get_user_status(response)
+			data = json.loads(resp.data.decode())
+			print(data)
+			self.assertTrue(data.get('status') == 'Sucess')
+			self.assertTrue(data.get('data') is not None)
+			self.assertTrue(data.get('data')['username'] == 'fmaketouser')
+			self.assertTrue(data.get('data')['admin'] is 'false')
+			self.assertTrue(data.get('data')['anonymous'] is 'false')
+			self.assertTrue(resp.status_code, 200)
+
+	def test_admin_user_status(self):
+		"""Test admin user status"""
+		with self.client:
+			response = register_user(self, 'fmaketouser', '123456', admin=True)
+			resp = get_user_status(response)
+			data = json.loads(resp.data.decode())
+			print(data)
+			self.assertTrue(data.get('status') == 'Success')
+			self.assertTrue(data.get('data') is not None)
+			self.assertTrue(data.get('data')['username'] == 'fmaketouser')
+			self.assertTrue(data.get('data')['admin'] is 'true')
+			self.assertTrue(data.get('data')['anonymous'] is 'false')
+			self.assertTrue(resp.status_code, 200)
 
 if __name__ == '__main__':
 	unittest.main()
