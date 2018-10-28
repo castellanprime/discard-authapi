@@ -4,12 +4,17 @@ __pycache__/
 *$py.class
 authApi/*/__pycache__/
 authApi/*/*/__pycache__/
+*/__pycache__/
 
 # C extensions
 *.so
 
 # Db files
 authApi/*/*.db
+
+# Output files
+*_output
+*_results
 
 # Distribution / packaging
 .Python
@@ -52,6 +57,7 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+tmp/*
 
 # Translations
 *.mo
